@@ -110,6 +110,10 @@ function omas_convert(tp::Type, val::Union{PythonCall.Py,PythonCall.PyArray})
     return PythonCall.pyconvert(tp, val)
 end
 
+function omas_convert(tp::Type, val::PythonCall.PyDict)
+    return IMAS.IMASdd.JSON.json(Dict{String, Any}(val), 1)
+end
+
 function Base.keys(ods::ODS)
     if ods.ids === nothing
         return String[]

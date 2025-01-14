@@ -73,9 +73,5 @@ end
     ods["equilibrium.time"] = OMAS.PythonCall.PyList{Any}([1.0, 2.0, 3.0])
     ods["equilibrium.time"] = np.array([1, 2, 3]).astype(np.float32)
     ods["equilibrium.time"] = OMAS.PythonCall.PyArray(Float32[1.0, 2.0, 3.0, 4.0])
+    ods["equilibrium.code.parameters"] = OMAS.PythonCall.PyDict()
 end
-
-# @testset "omasjl" begin
-#     omasjl = OMAS.PythonCall.pyimport("omasjl")
-
-# end
