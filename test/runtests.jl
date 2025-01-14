@@ -64,6 +64,19 @@ IMAS = OMAS.IMAS
 
     @test (ods2["equilibrium.time_slice.0.profiles_1d.psi"] = range(0, 1, 10)) == collect(range(0.0, 1.0, 10))
 
+    @test "equilibrium" in ods2
+    @test !("equilibrium" in ODS())
+
+    ods = ODS()
+    @test (ods.cocosio = 11) == 11
+    @test_throws AssertionError ods.cocosio = 1
+    ods.coordsio = Dict{String,Any}()
+    @test (ods.coordsio = Dict{String,Any}()) == Dict{String,Any}()
+    @test_throws AssertionError ods.coordsio = Dict{String,Any}("a" => 1)
+    @test !(ods.unitsio = false)
+    @test_throws AssertionError ods.unitsio = true
+    @test !(ods.uncertainio = false)
+    @test_throws AssertionError ods.uncertainio = true
 end
 
 @testset "PythonCall" begin

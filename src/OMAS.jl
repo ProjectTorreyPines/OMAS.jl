@@ -5,10 +5,28 @@ import PythonCall
 
 mutable struct ODS
     ids::Union{Nothing,<:IMAS.IDS,<:IMAS.IDSvector}
+    cocosio::Int
+    coordsio::Dict{String,Any}
+    unitsio::Bool
+    uncertainio::Bool
 end
 
+"""
+    ODS()
+
+Constructor with default values for .cocosio, .coordsio, .unitsio, .uncertainio
+"""
 function ODS()
-    ODS(nothing)
+    return ODS(nothing, IMAS.IMASdd.internal_cocos, Dict{String,Any}(), false, false)
+end
+
+"""
+    ODS(ids::Union{Nothing,<:IMAS.IDS,<:IMAS.IDSvector}, ods::ODS)
+
+Constructor that copies over values of ods.cocosio, ods.coordsio, ods.unitsio, ods.uncertainio from input ods
+"""
+function ODS(ids::Union{Nothing,<:IMAS.IDS,<:IMAS.IDSvector}, ods::ODS)
+    return ODS(ids, ods.cocosio, ods.coordsio, ods.unitsio, ods.uncertainio)
 end
 
 # Implement the OMAS API
@@ -55,7 +73,7 @@ function Base.getindex(ods::ODS, path::Vector)
         end
     end
     if typeof(h) <: Union{IMAS.IDS,IMAS.IDSvector}
-        return ODS(h)
+        return ODS(h, ods)
     else
         return h
     end
@@ -126,6 +144,23 @@ function Base.keys(ods::ODS)
     end
 end
 
+function Base.iterate(ods::ODS)
+    allkeys = collect(keys(ods))
+    if isempty(allkeys)
+        return nothing
+    end
+    return allkeys[1], (allkeys, 2)
+end
+
+function Base.iterate(ods::ODS, state::Tuple{Vector{String},Int})
+    allkeys, k = state
+    if k > length(allkeys)
+        return nothing
+    else
+        return allkeys[k], (allkeys, k + 1)
+    end
+end
+
 function ulocation(ods::ODS)
     uloc = IMAS.ulocation(getfield(ods, :ids))
     return replace(uloc, "[" => ".", "]" => "")
@@ -145,6 +180,8 @@ end
 function Base.getproperty(ods::ODS, field::Symbol)
     if field == :keys
         return () -> keys(ods)
+    elseif field in (:cocosio, :coordsio, :unitsio, :uncertainio)
+        return getfield(ods, field)
     elseif field == :location
         return location(ods)
     elseif field == :ulocation
@@ -152,6 +189,21 @@ function Base.getproperty(ods::ODS, field::Symbol)
     else
         return getfield(ods, field)
     end
+end
+
+function Base.setproperty!(ods::ODS, field::Symbol, value::Any)
+    # cocosio, coordsio, unitsio, uncertainio functionality not implemented
+    if field == :cocosio
+        @assert value == IMAS.IMASdd.internal_cocos "ods.cocosio functionality not yet implemented"
+    elseif field == :coordsio
+        @show value
+        @assert isempty(value) "ods.coordsio functionality not yet implemented"
+    elseif field == :unitsio
+        @assert !value "ods.unitsio functionality not yet implemented"
+    elseif field == :uncertainio
+        @assert !value "ods.uncertainio functionality not yet implemented"
+    end
+    return setfield!(ods, field, value)
 end
 
 export ODS
