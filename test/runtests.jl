@@ -23,7 +23,7 @@ IMAS = OMAS.IMAS
     @test (ods["dataset_description.data_entry.user"] = "bla") == "bla" == ods["dataset_description.data_entry.user"]
 
     # Keys
-    @test keys(ods) == [:dataset_description, :equilibrium]
+    @test keys(ods) == ["dataset_description", "equilibrium"]
     @test keys(ods["equilibrium.time_slice"]) == [1, 2]
 
     # Clearing
@@ -65,3 +65,17 @@ IMAS = OMAS.IMAS
     @test (ods2["equilibrium.time_slice.0.profiles_1d.psi"] = range(0, 1, 10)) == collect(range(0.0, 1.0, 10))
 
 end
+
+@testset "PythonCall" begin
+    np = OMAS.PythonCall.pyimport("numpy")
+
+    ods = OMAS.ODS()
+    ods["equilibrium.time"] = OMAS.PythonCall.PyList{Any}([1.0, 2.0, 3.0])
+    ods["equilibrium.time"] = np.array([1, 2, 3]).astype(np.float32)
+    ods["equilibrium.time"] = OMAS.PythonCall.PyArray(Float32[1.0, 2.0, 3.0, 4.0])
+end
+
+# @testset "omasjl" begin
+#     omasjl = OMAS.PythonCall.pyimport("omasjl")
+
+# end

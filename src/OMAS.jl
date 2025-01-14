@@ -1,6 +1,7 @@
 module OMAS
 
 import IMAS
+import PythonCall
 
 mutable struct ODS
     ids::Union{Nothing,<:IMAS.IDS,<:IMAS.IDSvector}
@@ -74,6 +75,7 @@ end
 function Base.setindex!(ods::ODS, val, key::String)
     path = IMAS.i2p(key)
     h = ods[IMAS.p2i(path[1:end-1])].ids
+    field = Symbol(path[end])
     if typeof(val) <: ODS && val.ids === nothing
         empty!(h)
         return val
@@ -81,15 +83,38 @@ function Base.setindex!(ods::ODS, val, key::String)
         if typeof(val) <: ODS
             val = val.ids
         end
-        return Base.setproperty!(h, Symbol(path[end]), val)
+        tp = IMAS.concrete_fieldtype_typeof(h, field)
+        if !(typeof(val) <: tp)
+            val = try
+                omas_convert(tp, val)
+            catch e
+                @show tp
+                @show typeof(val)
+                @show val
+                rethrow(e)
+            end
+        end
+        return Base.setproperty!(h, field, val)
     end
+end
+
+function omas_convert(tp::Type, val::Any)
+    return convert(tp, val)
+end
+
+function omas_convert(tp::Type, val::StepRangeLen)
+    return collect(val)
+end
+
+function omas_convert(tp::Type, val::Union{PythonCall.Py,PythonCall.PyArray})
+    return PythonCall.pyconvert(tp, val)
 end
 
 function Base.keys(ods::ODS)
     if ods.ids === nothing
         return String[]
     elseif typeof(ods.ids) <: IMAS.IDS
-        return collect(IMAS.keys_no_missing(ods.ids))
+        return collect(map(string, IMAS.keys_no_missing(ods.ids)))
     elseif typeof(ods.ids) <: IMAS.IDSvector
         return collect(1:length(ods.ids))
     else
@@ -114,10 +139,12 @@ function location(ods::ODS)
 end
 
 function Base.getproperty(ods::ODS, field::Symbol)
-    if field == :ulocation
-        return ulocation(ods)
+    if field == :keys
+        return () -> keys(ods)
     elseif field == :location
         return location(ods)
+    elseif field == :ulocation
+        return ulocation(ods)
     else
         return getfield(ods, field)
     end
