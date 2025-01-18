@@ -196,7 +196,6 @@ function Base.setproperty!(ods::ODS, field::Symbol, value::Any)
     if field == :cocosio
         @assert value == IMAS.IMASdd.internal_cocos "ods.cocosio functionality not yet implemented"
     elseif field == :coordsio
-        @show value
         @assert isempty(value) "ods.coordsio functionality not yet implemented"
     elseif field == :unitsio
         @assert !value "ods.unitsio functionality not yet implemented"
